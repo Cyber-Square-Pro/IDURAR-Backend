@@ -1,5 +1,6 @@
 const express = require('express');
-
+const path = require('path');
+const multer=require('multer');
 const { catchErrors } = require('@/handlers/errorHandlers');
 
 const router = express.Router();
@@ -48,7 +49,41 @@ router.route('/client/filter').get(catchErrors(clientController.filter));
 router.route('/client/summary').get(catchErrors(clientController.summary));
 
 // //_____________________________________ API for leads __________________________________________________
+
+
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public\\uploads\\lead');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage }).single('photo');
+const setFilePathToBody = (req, res, next) => {
+  req.filePath = req.file.path;
+  next();
+};
+
+router.route('/lead/upload').post(upload, setFilePathToBody, (req, res) => {
+  console.log('filepath', req.filePath);
+  return res.status(200).json({
+    success: true,
+    result: req.filePath,
+    message: 'Successfully uploaded the image',
+  });
+});
+
 router.route('/lead/create').post(catchErrors(leadController.create));
+
+
+
+router.route('/lead/create').post(catchErrors(leadController.create));
+
+
 router.route('/lead/read/:id').get(catchErrors(leadController.read));
 router.route('/lead/update/:id').patch(catchErrors(leadController.update));
 router.route('/lead/delete/:id').delete(catchErrors(leadController.delete));
@@ -56,6 +91,7 @@ router.route('/lead/search').get(catchErrors(leadController.search));
 router.route('/lead/list').get(catchErrors(leadController.list));
 router.route('/lead/filter').get(catchErrors(leadController.filter));
 router.route('/lead/summary').get(catchErrors(leadController.summary));
+
 
 // //_________________________________________________________________API for invoices_____________________
 router.route('/invoice/create').post(catchErrors(invoiceController.create));
